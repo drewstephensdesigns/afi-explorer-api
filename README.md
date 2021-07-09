@@ -7,9 +7,7 @@ This API provides data for the following mobile applications:
 - [AFI Explorer](https://play.google.com/store/apps/details?id=io.github.drewstephenscoding.afiexplorer&hl=en_US&gl=US) for Android 
  
 ## Routes
-- `/` the root path defaults to serve live data
-- `/live` pulls live data from e-pubs
-- `/static` pulls cached data from e-pubs stored in a Cloudflare KV object
+`/` the root path serves cached data from e-pubs using Cloudflare KV stores 
 
 ## Development
 The use of [miniflare](https://miniflare.dev) for local development is strongly reccomended. After installing the module globally with npm, run the following command to start the worker:
