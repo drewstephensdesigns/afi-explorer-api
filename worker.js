@@ -23,7 +23,14 @@ const PUBS_HOST = "https://www.e-publishing.af.mil/DesktopModules/MVC/EPUBS/EPUB
 const PUBS_URL = {
     USAF_DEPT_ALL: PUBS_HOST + "?orgID=10141&catID=1&series=-1",
     MAJCOM_ACC_ALL: PUBS_HOST + "?orgID=1&catID=2&series=-1",
-    MAJCOM_AETC_ALL: PUBS_HOST + "?orgID=6887&catID=2&series=-1"
+    MAJCOM_AETC_ALL: PUBS_HOST + "?orgID=6887&catID=2&series=-1",
+    MAJCOM_AFGSC_ALL: PUBS_HOST + "?orgID=59&catID=2&series=-1",
+    MAJCOM_AFMC_ALL: PUBS_HOST + "?orgID=4&catID=2&series=-1",
+    MAJCOM_AFRC_ALL: PUBS_HOST + "?orgID=10149&catID=2&series=-1",
+    MAJCOM_AFSOC_ALL: PUBS_HOST + "?orgID=6&catID=2&series=-1",
+    MAJCOM_AMC_ALL: PUBS_HOST + "?orgID=9774&catID=2&series=-1",
+    MAJCOM_PACAF_ALL: PUBS_HOST + "?orgID=8&catID=2&series=-1",
+    MAJCOM_USAFE_ALL: PUBS_HOST + "?orgID=9&catID=2&series=-1"
 }
 
 /**
