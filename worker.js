@@ -64,15 +64,24 @@ addEventListener("scheduled", event => {
  * @returns {Promise<Void>}
  */
 async function handleScheduled(_event) {
-    for (key in PUBS_URL) {
+    const promises = [];
+
+    for (const key in PUBS_URL) {
         const data = await getLiveDataFor(PUBS_URL[key])
         if (data.includes("PubID")) {
-            await STATIC_PUBS.put(key, data)
+            promises.push(STATIC_PUBS.put(key, data))
             console.log(key + " data stored")
         } else {
             return Promise.reject(new Error(key + " endpoint contains invalid data!"));
         }
     }
+
+    await Promise.all(promises)
+    .then(values => {
+        console.log(values.length + " successful KV entries")
+    }).catch(error => {
+        console.log("Error occured when attempting to store KV entry: " + error)
+    })
 }
 
 /**
