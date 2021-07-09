@@ -5,14 +5,23 @@
  * - Command: miniflare worker.js -k STATIC_PUBS
  */
 
+
 /**
  * Global declaration of request/response headers
  * as we only work with publicly accessible JSON
  */
- const init = {
+const init = {
     headers: {
         "content-type": "application/json;charset=UTF-8",
     },
+}
+
+/** Gloabl declaration of e-publishing endpoints
+ */
+const PUBS_URL = {
+    USAF_DEPT_ALL: "https://www.e-publishing.af.mil/DesktopModules/MVC/EPUBS/EPUB/GetPubsBySeriesView/?orgID=10141&catID=1&series=-1",
+    MAJCOM_ACC_ALL: "https://www.e-publishing.af.mil/DesktopModules/MVC/EPUBS/EPUB/GetPubsBySeriesView/?orgID=1&catID=2&series=-1",
+    MAJCOM_AETC_ALL: "https://www.e-publishing.af.mil/DesktopModules/MVC/EPUBS/EPUB/GetPubsBySeriesView/?orgID=6887&catID=2&series=-1"
 }
 
 /**
@@ -35,10 +44,13 @@ async function handleRequest(request) {
 
     switch (pathname) {
         case '/':
-        case '/live':
-            return respondLiveData()
-        case '/static':
-            return respondStaticData()
+            return respondWithDataForAll()
+        case '/pubs/usaf/departmental/all':
+            return respondWithDataFor(PUBS_URL.USAF_DEPT_ALL)
+        case '/pubs/majcom/acc/all':
+            return respondWithDataFor(PUBS_URL.MAJCOM_ACC_ALL)
+        case '/pubs/majcom/aetc/all':
+            return respondWithDataFor(PUBS_URL.MAJCOM_AETC_ALL)
     }
 
     return fetch(request)
@@ -57,10 +69,11 @@ addEventListener("scheduled", event => {
  * @returns {Promise<Void>}
  */
 async function handleScheduled(_event) {
-    const data = await getLiveData()
-    if (data.includes("PubID")) {
-        console.log("Data structure looks good, so we stored it in KV.")
-        await STATIC_PUBS.put("data", data)
+    for (key in PUBS_URL) {
+        const data = await getLiveDataFor(PUBS_URL[key])
+        if (data.includes("PubID")) {
+            await STATIC_PUBS.put(key, data)
+        }
     }
 }
 
@@ -96,8 +109,8 @@ function trim(text) {
  * Fetches pubs from epublishing.af.mil
  * @returns {Promise<String>}
  */
-async function getLiveData() {
-    return fetch(EPUBS_URL)
+async function getLiveDataFor(category) {
+    return fetch(category)
     .then(res => res.text())
     .then(text => {
         return trim(text)
@@ -108,22 +121,36 @@ async function getLiveData() {
  * Returns fetched, trimmed data from epublishing.af.mil
  * @returns {Promise<Response>}
  */
-async function respondLiveData() {
-    const data = await getLiveData()
-    if (data.length < 1000) {
-        console.log("Responding with static data")
-        return respondStaticData()
-    } else {
+async function respondWithDataFor(category) {
+    const data = await getLiveDataFor(category)
+    // if (!data.includes("PubID")) {
+    //     console.log("Responding with static data")
+    //     const data = await STATIC_PUBS.get("data")
+    //     return new Response(data, init)
+    // } else {
         console.log("Responding with live data")
         return new Response(data, init)
-    }
+    // }
 }
 
 /**
- * Returns KV cached, trimmed data from epublishing.af.mil
+ * Returns fetched, trimmed data from epublishing.af.mil
  * @returns {Promise<Response>}
  */
-async function respondStaticData() {
-    const data = await STATIC_PUBS.get("data")
-    return new Response(data, init)
+ async function respondWithDataForAll() {
+    const promises = [];
+
+    for (const key in PUBS_URL) {
+        promises.push(STATIC_PUBS.get(key, {type: "json"}))
+    }
+
+    const data = await Promise.all(promises).then(values => {
+        var merged = [];
+        for (var i = 0; i < values.length; i++) {
+            merged = merged.concat(values[i]);
+        }
+        return merged;
+    })
+    
+    return new Response(JSON.stringify(data), init)
 }
