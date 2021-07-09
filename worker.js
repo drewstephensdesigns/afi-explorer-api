@@ -1,4 +1,11 @@
 /**
+ * Using Miniflare FTW:
+ * - Docs: https://miniflare.dev
+ * - Cron trigger: http://localhost:8787/.mf/scheduled
+ * - Command: miniflare worker.js -k STATIC_PUBS
+ */
+
+/**
  * Global declaration of request/response headers
  * as we only work with publicly accessible JSON
  */
