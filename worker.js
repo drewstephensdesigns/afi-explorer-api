@@ -16,12 +16,14 @@ const init = {
     },
 }
 
-/** Gloabl declaration of e-publishing endpoints
+/** 
+ * Gloabl declaration of e-publishing host and endpoints
  */
+const PUBS_HOST = "https://www.e-publishing.af.mil/DesktopModules/MVC/EPUBS/EPUB/GetPubsBySeriesView/"
 const PUBS_URL = {
-    USAF_DEPT_ALL: "https://www.e-publishing.af.mil/DesktopModules/MVC/EPUBS/EPUB/GetPubsBySeriesView/?orgID=10141&catID=1&series=-1",
-    MAJCOM_ACC_ALL: "https://www.e-publishing.af.mil/DesktopModules/MVC/EPUBS/EPUB/GetPubsBySeriesView/?orgID=1&catID=2&series=-1",
-    MAJCOM_AETC_ALL: "https://www.e-publishing.af.mil/DesktopModules/MVC/EPUBS/EPUB/GetPubsBySeriesView/?orgID=6887&catID=2&series=-1"
+    USAF_DEPT_ALL: PUBS_HOST + "?orgID=10141&catID=1&series=-1",
+    MAJCOM_ACC_ALL: PUBS_HOST + "?orgID=1&catID=2&series=-1",
+    MAJCOM_AETC_ALL: PUBS_HOST + "?orgID=6887&catID=2&series=-1"
 }
 
 /**
