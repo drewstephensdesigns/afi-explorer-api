@@ -131,7 +131,7 @@ async function getLiveDataFor(category) {
         for (var i = 0; i < values.length; i++) {
             merged = merged.concat(values[i]);
         }
-        return merged;
+        return merged.filter(p => p);
     })
     
     return new Response(JSON.stringify(data), init)
