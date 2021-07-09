@@ -40,16 +40,8 @@ addEventListener("fetch", event => {
  * @param {Request} request
  * @returns {Promise<Response>}
  */
-async function handleRequest(request) {
-    const { url } = request
-    const { pathname } = new URL(url)
-
-    switch (pathname) {
-        case '/':
-            return respondWithDataForAll()
-    }
-
-    return fetch(request)
+async function handleRequest(_request) {
+    return respondWithDataForAll()
 }
 
 /**
@@ -68,10 +60,10 @@ async function handleScheduled(_event) {
     for (key in PUBS_URL) {
         const data = await getLiveDataFor(PUBS_URL[key])
         if (data.includes("PubID")) {
-            console.log(key + " endpoint contains a PubID key")
             await STATIC_PUBS.put(key, data)
+            console.log(key + " data stored")
         } else {
-            return Promise.reject(new Error("Invalid KV data store for " + key));
+            return Promise.reject(new Error(key + " endpoint contains invalid data!"));
         }
     }
 }
