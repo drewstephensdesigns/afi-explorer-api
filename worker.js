@@ -45,12 +45,6 @@ async function handleRequest(request) {
     switch (pathname) {
         case '/':
             return respondWithDataForAll()
-        case '/pubs/usaf/departmental/all':
-            return respondWithDataFor(PUBS_URL.USAF_DEPT_ALL)
-        case '/pubs/majcom/acc/all':
-            return respondWithDataFor(PUBS_URL.MAJCOM_ACC_ALL)
-        case '/pubs/majcom/aetc/all':
-            return respondWithDataFor(PUBS_URL.MAJCOM_AETC_ALL)
     }
 
     return fetch(request)
@@ -72,7 +66,10 @@ async function handleScheduled(_event) {
     for (key in PUBS_URL) {
         const data = await getLiveDataFor(PUBS_URL[key])
         if (data.includes("PubID")) {
+            console.log(key + " endpoint contains a PubID key")
             await STATIC_PUBS.put(key, data)
+        } else {
+            return Promise.reject(new Error("Invalid KV data store for " + key));
         }
     }
 }
@@ -115,22 +112,6 @@ async function getLiveDataFor(category) {
     .then(text => {
         return trim(text)
     })
-}
-
-/**
- * Returns fetched, trimmed data from epublishing.af.mil
- * @returns {Promise<Response>}
- */
-async function respondWithDataFor(category) {
-    const data = await getLiveDataFor(category)
-    // if (!data.includes("PubID")) {
-    //     console.log("Responding with static data")
-    //     const data = await STATIC_PUBS.get("data")
-    //     return new Response(data, init)
-    // } else {
-        console.log("Responding with live data")
-        return new Response(data, init)
-    // }
 }
 
 /**
