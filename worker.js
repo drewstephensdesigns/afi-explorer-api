@@ -9,10 +9,27 @@
  * Global declaration of request/response headers
  * as we only work with publicly accessible JSON
  */
- const init = {
+const init = {
     headers: {
         "content-type": "application/json;charset=UTF-8",
     },
+}
+
+/** 
+ * Gloabl declaration of e-publishing host and endpoints
+ */
+const PUBS_HOST = "https://www.e-publishing.af.mil/DesktopModules/MVC/EPUBS/EPUB/GetPubsBySeriesView/"
+const PUBS_URL = {
+    USAF_DEPT_ALL: PUBS_HOST + "?orgID=10141&catID=1&series=-1",
+    MAJCOM_ACC_ALL: PUBS_HOST + "?orgID=1&catID=2&series=-1",
+    MAJCOM_AETC_ALL: PUBS_HOST + "?orgID=6887&catID=2&series=-1",
+    MAJCOM_AFGSC_ALL: PUBS_HOST + "?orgID=59&catID=2&series=-1",
+    MAJCOM_AFMC_ALL: PUBS_HOST + "?orgID=4&catID=2&series=-1",
+    MAJCOM_AFRC_ALL: PUBS_HOST + "?orgID=10149&catID=2&series=-1",
+    MAJCOM_AFSOC_ALL: PUBS_HOST + "?orgID=6&catID=2&series=-1",
+    MAJCOM_AMC_ALL: PUBS_HOST + "?orgID=9774&catID=2&series=-1",
+    MAJCOM_PACAF_ALL: PUBS_HOST + "?orgID=8&catID=2&series=-1",
+    MAJCOM_USAFE_ALL: PUBS_HOST + "?orgID=9&catID=2&series=-1"
 }
 
 /**
@@ -29,19 +46,8 @@ addEventListener("fetch", event => {
  * @param {Request} request
  * @returns {Promise<Response>}
  */
-async function handleRequest(request) {
-    const { url } = request
-    const { pathname } = new URL(url)
-
-    switch (pathname) {
-        case '/':
-        case '/live':
-            return respondLiveData()
-        case '/static':
-            return respondStaticData()
-    }
-
-    return fetch(request)
+async function handleRequest(_request) {
+    return respondWithDataForAll()
 }
 
 /**
@@ -57,10 +63,14 @@ addEventListener("scheduled", event => {
  * @returns {Promise<Void>}
  */
 async function handleScheduled(_event) {
-    const data = await getLiveData()
-    if (data.includes("PubID")) {
-        console.log("Data structure looks good, so we stored it in KV.")
-        await STATIC_PUBS.put("data", data)
+    for await (const key of Object.keys(PUBS_URL)) {
+        const data = await getLiveDataFor(PUBS_URL[key])
+        if (data.includes("PubID")) {
+            await STATIC_PUBS.put(key, data)
+            console.log(key + " data stored")
+        } else {
+            return Promise.reject(new Error(key + " endpoint contains invalid data!"));
+        }
     }
 }
 
@@ -96,34 +106,32 @@ function trim(text) {
  * Fetches pubs from epublishing.af.mil
  * @returns {Promise<String>}
  */
-async function getLiveData() {
-    return fetch(EPUBS_URL)
-    .then(res => res.text())
-    .then(text => {
-        return trim(text)
-    })
+async function getLiveDataFor(category) {
+    return fetch(category)
+        .then(res => res.text())
+        .then(text => {
+            return trim(text)
+        })
 }
 
 /**
  * Returns fetched, trimmed data from epublishing.af.mil
  * @returns {Promise<Response>}
  */
-async function respondLiveData() {
-    const data = await getLiveData()
-    if (data.length < 1000) {
-        console.log("Responding with static data")
-        return respondStaticData()
-    } else {
-        console.log("Responding with live data")
-        return new Response(data, init)
-    }
-}
+async function respondWithDataForAll() {
+    const promises = [];
 
-/**
- * Returns KV cached, trimmed data from epublishing.af.mil
- * @returns {Promise<Response>}
- */
-async function respondStaticData() {
-    const data = await STATIC_PUBS.get("data")
-    return new Response(data, init)
+    for await (const key of Object.keys(PUBS_URL)) {
+        promises.push(STATIC_PUBS.get(key, { type: "json" }))
+    }
+
+    const data = await Promise.all(promises).then(values => {
+        var merged = [];
+        for (var i = 0; i < values.length; i++) {
+            merged = merged.concat(values[i]);
+        }
+        return merged.filter(p => p);
+    })
+
+    return new Response(JSON.stringify(data), init)
 }
