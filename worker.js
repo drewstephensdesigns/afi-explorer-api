@@ -12,7 +12,7 @@
 const init = {
     headers: {
         "content-type": "application/json;charset=UTF-8",
-    },
+    }
 }
 
 /** 
@@ -46,8 +46,16 @@ addEventListener("fetch", event => {
  * @param {Request} request
  * @returns {Promise<Response>}
  */
-async function handleRequest(_request) {
-    return respondWithDataForAll()
+async function handleRequest(request) {
+    const { url } = request
+    const params = (new URL(url)).searchParams
+    if (params != "") {
+        console.log("Responding with some pubs")
+        return respondWith(params)
+    } else {
+        console.log("Responding with all pubs")
+        return respondWithAll()
+    }
 }
 
 /**
@@ -59,18 +67,19 @@ addEventListener("scheduled", event => {
 
 /**
  * Handles scheduled events provided by the listener
- * @param {Event} _event
+ * @param {Event} event
  * @returns {Promise<Void>}
  */
-async function handleScheduled(_event) {
-    for await (const key of Object.keys(PUBS_URL)) {
-        const data = await getLiveDataFor(PUBS_URL[key])
-        if (data.includes("PubID")) {
-            await STATIC_PUBS.put(key, data)
-            console.log(key + " data stored")
-        } else {
-            return Promise.reject(new Error(key + " endpoint contains invalid data!"));
-        }
+async function handleScheduled(event) {
+    const keys = Object.keys(PUBS_URL)
+    const keyIndex = Math.trunc(event.scheduledTime / 60000) % keys.length
+    const key = keys[keyIndex]
+    const data = await getLiveDataFor(PUBS_URL[key])
+    if (data.includes("PubID")) {
+        await STATIC_PUBS.put(key, data)
+        console.log(key + " data stored")
+    } else {
+        return Promise.reject(new Error(key + " endpoint contains invalid data!"));
     }
 }
 
@@ -106,19 +115,29 @@ function trim(text) {
  * Fetches pubs from epublishing.af.mil
  * @returns {Promise<String>}
  */
-async function getLiveDataFor(category) {
-    return fetch(category)
+async function getLiveDataFor(url) {
+    console.log("Retrieving data from " + url)
+    return fetch(url)
         .then(res => res.text())
         .then(text => {
             return trim(text)
         })
 }
 
+async function respondWith(params) {
+    const result = await STATIC_PUBS.get("MAJCOM_" + params.get('majcom').toUpperCase() + "_ALL", { type: "json" })
+    if (result) {
+        return new Response(JSON.stringify(result), init)
+    } else {
+        return new Response('', { status: 404 })
+    }
+}
+
 /**
  * Returns fetched, trimmed data from epublishing.af.mil
  * @returns {Promise<Response>}
  */
-async function respondWithDataForAll() {
+async function respondWithAll() {
     const promises = [];
 
     for await (const key of Object.keys(PUBS_URL)) {
