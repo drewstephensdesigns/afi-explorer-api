@@ -5,7 +5,6 @@
  * - Command: miniflare worker.js -k STATIC_PUBS
  */
 
-
 /**
  * Global declaration of request/response headers
  * as we only work with publicly accessible JSON
@@ -64,24 +63,15 @@ addEventListener("scheduled", event => {
  * @returns {Promise<Void>}
  */
 async function handleScheduled(_event) {
-    const promises = [];
-
-    for (const key in PUBS_URL) {
+    for await (const key of Object.keys(PUBS_URL)) {
         const data = await getLiveDataFor(PUBS_URL[key])
         if (data.includes("PubID")) {
-            promises.push(STATIC_PUBS.put(key, data))
+            await STATIC_PUBS.put(key, data)
             console.log(key + " data stored")
         } else {
             return Promise.reject(new Error(key + " endpoint contains invalid data!"));
         }
     }
-
-    await Promise.all(promises)
-    .then(values => {
-        console.log(values.length + " successful KV entries")
-    }).catch(error => {
-        console.log("Error occured when attempting to store KV entry: " + error)
-    })
 }
 
 /**
@@ -118,21 +108,21 @@ function trim(text) {
  */
 async function getLiveDataFor(category) {
     return fetch(category)
-    .then(res => res.text())
-    .then(text => {
-        return trim(text)
-    })
+        .then(res => res.text())
+        .then(text => {
+            return trim(text)
+        })
 }
 
 /**
  * Returns fetched, trimmed data from epublishing.af.mil
  * @returns {Promise<Response>}
  */
- async function respondWithDataForAll() {
+async function respondWithDataForAll() {
     const promises = [];
 
-    for (const key in PUBS_URL) {
-        promises.push(STATIC_PUBS.get(key, {type: "json"}))
+    for await (const key of Object.keys(PUBS_URL)) {
+        promises.push(STATIC_PUBS.get(key, { type: "json" }))
     }
 
     const data = await Promise.all(promises).then(values => {
@@ -142,6 +132,6 @@ async function getLiveDataFor(category) {
         }
         return merged.filter(p => p);
     })
-    
+
     return new Response(JSON.stringify(data), init)
 }
