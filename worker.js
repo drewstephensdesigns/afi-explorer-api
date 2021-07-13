@@ -74,13 +74,14 @@ async function handleScheduled(event) {
     const keys = Object.keys(PUBS_URL)
     const keyIndex = Math.trunc(event.scheduledTime / 60000) % keys.length
     const key = keys[keyIndex]
-    const data = await getLiveDataFor(PUBS_URL[key])
-    if (data.includes("PubID")) {
-        await STATIC_PUBS.put(key, data)
-        console.log(key + " data stored")
-    } else {
-        return Promise.reject(new Error(key + " endpoint contains invalid data!"));
-    }
+    return getLiveDataFor(PUBS_URL[key]).then(async data => {
+        if (data.includes("PubID")) {
+            await STATIC_PUBS.put(key, data)
+            console.log(key + " data stored")
+        } else {
+            throw new Error(key + " has invalid data!");
+        }
+    }).catch(error => handleError(error))
 }
 
 /**
@@ -118,10 +119,8 @@ function trim(text) {
 async function getLiveDataFor(url) {
     console.log("Retrieving data from " + url)
     return fetch(url)
-        .then(res => res.text())
-        .then(text => {
-            return trim(text)
-        })
+    .then(res => res.text())
+    .then(text => trim(text))
 }
 
 async function respondWith(params) {
