@@ -1,7 +1,7 @@
 /**
  * Using Miniflare FTW:
  * - Docs: https://miniflare.dev
- * - Cron trigger: http://localhost:8787/.mf/scheduled
+ * - Manual cron trigger: http://localhost:8787/.mf/scheduled
  * - Command: miniflare worker.js -k STATIC_PUBS
  */
 
@@ -16,7 +16,9 @@ const init = {
 }
 
 /** 
- * Gloabl declaration of e-publishing host and endpoints
+ * Gloabl declaration of e-publishing host and endpoints.
+ * Currently includes support for all departmental publications,
+ * and MAJCOM supplements only.
  */
 const PUBS_HOST = "https://www.e-publishing.af.mil/DesktopModules/MVC/EPUBS/EPUB/GetPubsBySeriesView/"
 const PUBS_URL = {
@@ -33,7 +35,9 @@ const PUBS_URL = {
 }
 
 /**
- * Listens for incoming HTTP fetch requests.
+ * Listens for incoming HTTP fetch requests. Responds by calling
+ * the handleRequest function to produce a Responses, and handles
+ * errors thru the handleError function.
  */
 addEventListener("fetch", event => {
     const { request } = event
@@ -59,7 +63,7 @@ addEventListener("fetch", event => {
 }
 
 /**
- * Receives an HTTP request and replies with a response.
+ * Receives an HTTP request and returns a response.
  * @param {Request} request
  * @returns {Promise<Response>}
  */
@@ -83,7 +87,10 @@ addEventListener("scheduled", event => {
 })
 
 /**
- * Handles scheduled events provided by the listener
+ * Handles scheduled events provided by the listener. Using modular
+ * arithmatic, the function will determine which e-pubs endpoint
+ * to query, verify the retrieved object, and store in KV for later
+ * reference.
  * @param {Event} event
  * @returns {Promise<Void>}
  */
@@ -104,7 +111,7 @@ async function handleScheduled(event) {
 }
 
 /**
- * Extracts the pubs array from the object returned by epublishing.af.mil
+ * Extracts the pubs array from the HTML object returned by e-publishing.af.mil
  * @param {String} text
  * @returns {String}
  */
@@ -115,7 +122,7 @@ function trim(text) {
 }
 
 /**
- * Fetches pubs from epublishing.af.mil
+ * Fetches pubs from e-publishing.af.mil
  * @returns {Promise<String>}
  */
 async function getLiveDataFor(url) {
@@ -124,6 +131,11 @@ async function getLiveDataFor(url) {
     .then(text => trim(text))
 }
 
+/**
+ * Responds with the appropriate batch of MAJCOM supplements
+ * @param {URLSearchParams} params 
+ * @returns {Response}
+ */
 async function respondWith(params) {
     const result = await STATIC_PUBS.get("MAJCOM_" + params.get('majcom').toUpperCase() + "_ALL", { type: "json" })
     if (result) {
@@ -134,7 +146,7 @@ async function respondWith(params) {
 }
 
 /**
- * Returns fetched, trimmed data from epublishing.af.mil
+ * Returns aggregated e-pubs data found in the KV store
  * @returns {Promise<Response>}
  */
 async function respondWithAll() {
