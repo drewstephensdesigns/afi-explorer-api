@@ -42,6 +42,23 @@ addEventListener("fetch", event => {
 })
 
 /**
+ * Responds with an uncaught error.
+ * @param {Error} error
+ * @returns {Promise<Response>}
+ */
+ function handleError(error) {
+    console.error('Uncaught error:', error)
+
+    const { stack } = error
+    return new Response(stack || error, {
+        status: 500,
+        headers: {
+            'Content-Type': 'text/plain;charset=UTF-8'
+        }
+    })
+}
+
+/**
  * Receives an HTTP request and replies with a response.
  * @param {Request} request
  * @returns {Promise<Response>}
@@ -75,30 +92,15 @@ async function handleScheduled(event) {
     const keyIndex = Math.trunc(event.scheduledTime / 60000) % keys.length
     const key = keys[keyIndex]
     return getLiveDataFor(PUBS_URL[key]).then(async data => {
-        if (data.includes("PubID")) {
+        const verified = data.startsWith('[{"PubID":')
+        if (verified) {
+            console.log(key + " data verified")
             await STATIC_PUBS.put(key, data)
             console.log(key + " data stored")
         } else {
-            throw new Error(key + " has invalid data!");
+            throw new Error(key + " data is invalid!");
         }
-    }).catch(error => handleError(error))
-}
-
-/**
- * Responds with an uncaught error.
- * @param {Error} error
- * @returns {Promise<Response>}
- */
-function handleError(error) {
-    console.error('Uncaught error:', error)
-
-    const { stack } = error
-    return new Response(stack || error, {
-        status: 500,
-        headers: {
-            'Content-Type': 'text/plain;charset=UTF-8'
-        }
-    })
+    }).catch(console.error)
 }
 
 /**
@@ -107,8 +109,8 @@ function handleError(error) {
  * @returns {String}
  */
 function trim(text) {
-    var startIndex = text.lastIndexOf('[');
-    var endIndex = text.lastIndexOf(']');
+    var startIndex = text.lastIndexOf('[')
+    var endIndex = text.lastIndexOf(']')
     return text.substring(startIndex, endIndex + 1)
 }
 
@@ -117,7 +119,6 @@ function trim(text) {
  * @returns {Promise<String>}
  */
 async function getLiveDataFor(url) {
-    console.log("Retrieving data from " + url)
     return fetch(url)
     .then(res => res.text())
     .then(text => trim(text))
