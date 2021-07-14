@@ -31,7 +31,8 @@ const PUBS_URL = {
     MAJCOM_AFSOC_ALL: PUBS_HOST + "?orgID=6&catID=2&series=-1",
     MAJCOM_AMC_ALL: PUBS_HOST + "?orgID=9774&catID=2&series=-1",
     MAJCOM_PACAF_ALL: PUBS_HOST + "?orgID=8&catID=2&series=-1",
-    MAJCOM_USAFE_ALL: PUBS_HOST + "?orgID=9&catID=2&series=-1"
+    MAJCOM_USAFE_ALL: PUBS_HOST + "?orgID=9&catID=2&series=-1",
+    AFROTC_ALL: "https://raw.githubusercontent.com/willswire/afrotc-pubs/main/data.txt"
 }
 
 /**
