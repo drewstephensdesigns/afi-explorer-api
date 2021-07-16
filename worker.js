@@ -69,15 +69,8 @@ addEventListener("fetch", event => {
  * @returns {Promise<Response>}
  */
 async function handleRequest(request) {
-    const { url } = request
-    const params = (new URL(url)).searchParams
-    if (params != "") {
-        console.log("Responding with some pubs")
-        return respondWith(params)
-    } else {
-        console.log("Responding with all pubs")
-        return respondWithAll()
-    }
+    console.log("Responding with all pubs")
+    return respond()
 }
 
 /**
@@ -99,7 +92,7 @@ async function handleScheduled(event) {
     const keys = Object.keys(PUBS_URL)
     const keyIndex = Math.trunc(event.scheduledTime / 60000) % keys.length
     const key = keys[keyIndex]
-    return getLiveDataFor(PUBS_URL[key]).then(async data => {
+    return retrieve(PUBS_URL[key]).then(async data => {
         const verified = data.startsWith('[{"PubID":')
         if (verified) {
             console.log(key + " data verified")
@@ -126,31 +119,17 @@ function trim(text) {
  * Fetches pubs from e-publishing.af.mil
  * @returns {Promise<String>}
  */
-async function getLiveDataFor(url) {
+async function retrieve(url) {
     return fetch(url)
     .then(res => res.text())
     .then(text => trim(text))
 }
 
 /**
- * Responds with the appropriate batch of MAJCOM supplements
- * @param {URLSearchParams} params 
- * @returns {Response}
- */
-async function respondWith(params) {
-    const result = await STATIC_PUBS.get("MAJCOM_" + params.get('majcom').toUpperCase() + "_ALL", { type: "json" })
-    if (result) {
-        return new Response(JSON.stringify(result), init)
-    } else {
-        return new Response('', { status: 404 })
-    }
-}
-
-/**
  * Returns aggregated e-pubs data found in the KV store
  * @returns {Promise<Response>}
  */
-async function respondWithAll() {
+async function respond() {
     const promises = [];
 
     for await (const key of Object.keys(PUBS_URL)) {
