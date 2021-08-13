@@ -1,5 +1,5 @@
 # AFI Explorer API
-Aggregates [e-publishing.af.mil](https://www.e-publishing.af.mil/Product-Index/) publication objects into a single JSON object array using [Cloudflare Workers](https://workers.cloudflare.com). 
+Aggregates [e-publishing.af.mil](https://www.e-publishing.af.mil/Product-Index/) publication objects into a single JSON object array using [Cloudflare Workers and KV Stores](https://workers.cloudflare.com). This API/data-source provides information for the [AFI Explorer](https://afiexplorer.com) mobile app. 
 
 ## API Usage
 You can access the live API by visiting [api.afiexplorer.com](https://api.afiexplorer.com)
