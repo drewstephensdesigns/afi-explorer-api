@@ -1,0 +1,25 @@
+name: Run Worker
+
+on:
+  workflow_dispatch:  # Allows manual trigger from GitHub
+  schedule:            # Optional: Schedule to run periodically
+    - cron: '0 * * * *'  # Runs every hour (adjust as needed)
+
+jobs:
+  run-worker:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3  # Pulls your code
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Adjust Node version if needed
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Worker Script
+        run: node worker.js
